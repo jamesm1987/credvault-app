@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { Head } from '@inertiajs/vue3';
-import { ref } from 'vue';
+import { Head, useForm, router } from '@inertiajs/vue3';
+import { ref, watch } from 'vue';
 import { dashboard } from '@/routes';
 import { Search, Trash2, Globe, Plus } from "lucide-vue-next";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -18,6 +18,17 @@ import {
 } from "@/Components/ui/dialog";
 
 
+const props = defineProps<{
+    clients: Array<{
+        id: number;
+        name: string;
+        created_at: string;
+    }>;
+    filters: {
+        search: string;
+    }
+}>();
+
 defineOptions({
     layout: {
         breadcrumbs: [
@@ -30,8 +41,33 @@ defineOptions({
 });
 
 
-const search = ref('');
-const clients = [];
+const search = ref(props.filters?.search || '');
+watch(search, (value) => {
+    router.get('/dashboard', { search: value }, {
+        preserveState: true,
+        replace: true
+    });
+});
+
+const form = useForm({
+    name: '',
+});
+
+const submit = () => {
+    form.post('/clients', {
+        onSuccess: () => {
+            form.reset();
+        },
+    });
+};
+
+const deleteClient = (id: number) => {
+    if (confirm('Are you sure you want to delete this client?')) {
+        router.delete(`/clients/${id}`);
+    }
+};
+
+
 </script>
 
 <template>
@@ -61,12 +97,25 @@ const clients = [];
                     <DialogHeader>
                         <DialogTitle>New Client</DialogTitle>
                     </DialogHeader>
-                    <form action="" class="space-y-4">
+                    <form @submit.prevent="submit" class="space-y-4">
                         <div class="space-y-2">
-                            <Label>Name *</Label>
-                            <Input name="name" required placeholder="Client name" />
+                            <Label for="name">Name *</Label>
+                            <Input 
+                                id="name" 
+                                v-model="form.name" 
+                                name="name" 
+                                required 
+                                placeholder="Client name" 
+                                :disabled="form.processing" 
+                            />
+
+                            <div v-if="form.errors.name" class="text-destructive text-sm">
+                                {{ form.errors.name }}
+                            </div>
                         </div>
-                        <Button type="submit" class="w-full">Create Client</Button>
+                        <Button type="submit" class="w-full" :disabled="form.processing">
+                            {{ form.processing ? 'Creating...' : 'Create Client' }}
+                        </Button>
                     </form>
                 </DialogContent>
             </Dialog>
@@ -84,7 +133,7 @@ const clients = [];
                     </TableRow>
                 </TableHeader>
                 <TableBody>
-                    <template v-if="clients.length > 0">
+                    <template v-if="clients?.length > 0">
                         <TableRow v-for="client in clients" :key="client.id" class="hover:bg-muted/50 cursor-pointer">
                             <TableCell class="font-medium">{{ client.name }}</TableCell>
                             <TableCell>
@@ -111,7 +160,7 @@ const clients = [];
                     </template>
 
                     <TableRow v-else>
-                        <TableCell colSpan={5} class="text-center py-10 text-muted-foreground">
+                        <TableCell colSpan="5" class="text-center py-10 text-muted-foreground">
                             No clients found.
                         </TableCell>
                     </TableRow>
