@@ -43,7 +43,7 @@ defineOptions({
 
 const search = ref(props.filters?.search || '');
 watch(search, (value) => {
-    router.get('/dashboard', { search: value }, {
+    router.get('/', { search: value }, {
         preserveState: true,
         replace: true
     });
@@ -54,7 +54,7 @@ const form = useForm({
 });
 
 const submit = () => {
-    form.post('/clients', {
+    form.post('/api/v1/clients', {
         onSuccess: () => {
             form.reset();
         },
@@ -63,7 +63,7 @@ const submit = () => {
 
 const deleteClient = (id: number) => {
     if (confirm('Are you sure you want to delete this client?')) {
-        router.delete(`/clients/${id}`);
+        router.delete(`/api/v1/clients/${id}`);
     }
 };
 
@@ -96,6 +96,7 @@ const deleteClient = (id: number) => {
                 <DialogContent>
                     <DialogHeader>
                         <DialogTitle>New Client</DialogTitle>
+                          <DialogDescription>Create new client</DialogDescription>
                     </DialogHeader>
                     <form @submit.prevent="submit" class="space-y-4">
                         <div class="space-y-2">
@@ -148,13 +149,15 @@ const deleteClient = (id: number) => {
                                 <span class="text-sm">Just now</span>
                             </TableCell>
                             <TableCell>
-                                <Button
+                                <form @submit.prevent="deleteClient(client.id)"
                                     variant="ghost"
                                     size="icon"
                                     class="h-7 w-7"
                                 >
+                                <Button type="submit">
                                     <Trash2 class="w-3.5 h-3.5 text-destructive" />
                                 </Button>
+                                </form>
                             </TableCell>
                         </TableRow>
                     </template>

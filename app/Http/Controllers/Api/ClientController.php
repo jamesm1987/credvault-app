@@ -7,7 +7,7 @@ use App\Http\Requests\StoreClientRequest;
 use App\Http\Requests\UpdateClientRequest;
 use App\Http\Resources\ClientResource;
 use App\Models\Client;
-use App\Models\Environment;
+// /use App\Models\Environment;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Response;
@@ -30,7 +30,6 @@ class ClientController extends Controller
         $perPage = min(max((int) ($request->input('per_page', 25)), 1), 100);
 
         $clients = Client::query()
-            ->withCount('credentials')
             ->when($request->search, fn ($q, $s) => $q->where('name', 'like', "%{$s}%"))
             ->orderBy($sortColumn, $direction)
             ->paginate($perPage);
@@ -46,9 +45,9 @@ class ClientController extends Controller
         $validated = $request->validated();
 
         $client = new Client(['name' => $validated['name']]);
-        $client->environment()->associate(Environment::findOrFail($validated['environment_id']));
+        // $client->environment()->associate(Environment::findOrFail($validated['environment_id']));
         $client->save();
-        $client->loadCount('credentials');
+        // $client->loadCount('credentials');
 
         return new ClientResource($client);
     }
